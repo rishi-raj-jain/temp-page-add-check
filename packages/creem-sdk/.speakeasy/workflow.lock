@@ -1,0 +1,41 @@
+speakeasyVersion: 1.790.1
+sources:
+    Creem API:
+        sourceNamespace: creem-api
+        sourceRevisionDigest: sha256:2f048bf5632b2a01ee3023238ee6eb63fccec116c4dcb48403f4eaec770fc388
+        sourceBlobDigest: sha256:c5f97b044f87fae7b5e938eab0e125a82732d61910cbcf7e6e93319c175bcf07
+        tags:
+            - latest
+            - v1
+targets:
+    creem:
+        source: Creem API
+        sourceNamespace: creem-api
+        sourceRevisionDigest: sha256:2f048bf5632b2a01ee3023238ee6eb63fccec116c4dcb48403f4eaec770fc388
+        sourceBlobDigest: sha256:c5f97b044f87fae7b5e938eab0e125a82732d61910cbcf7e6e93319c175bcf07
+        codeSamplesNamespace: creem-api-typescript-code-samples
+        codeSamplesRevisionDigest: sha256:c4dfc655cbd4d97942d9b512cab80788500766e7b61137fcdd6609fdc5fdc3b1
+workflow:
+    workflowVersion: 1.0.0
+    speakeasyVersion: latest
+    sources:
+        Creem API:
+            inputs:
+                - location: ./openapi.json
+            overlays:
+                - location: .speakeasy/speakeasy-modifications-overlay.yaml
+            registry:
+                location: registry.speakeasyapi.dev/creem/engineering/creem-api
+    targets:
+        creem:
+            target: typescript
+            source: Creem API
+            publish:
+                npm:
+                    token: $npm_token
+            codeSamples:
+                registry:
+                    location: registry.speakeasyapi.dev/creem/engineering/creem-api-typescript-code-samples
+                labelOverride:
+                    fixedValue: Typescript (SDK)
+                blocking: false

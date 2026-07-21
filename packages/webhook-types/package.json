@@ -1,0 +1,46 @@
+{
+  "name": "@creem_io/webhook-types",
+  "version": "1.0.0",
+  "description": "Shared webhook types and utilities for Creem adapters",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "keywords": [
+    "creem",
+    "webhooks",
+    "types",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/armitage-labs/creem.git",
+    "directory": "packages/webhook-types"
+  },
+  "homepage": "https://github.com/armitage-labs/creem/tree/main/packages/webhook-types",
+  "author": "Creem",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
