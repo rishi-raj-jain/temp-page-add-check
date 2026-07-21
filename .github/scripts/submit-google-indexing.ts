@@ -1,6 +1,11 @@
 /**
  * Asks Google to index the docs pages a push added.
  *
+ * TEMPORARY TEST MODE: the docs.creem.io logic in main() is commented out. Every
+ * run submits the single URL in TEST_URL, so the workflow can be exercised with
+ * a personal service account before the real property is wired up. Uncomment the
+ * block in main() to restore normal behaviour.
+ *
  * Runs from the docs-google-indexing workflow on every push to main. Needs Node
  * 22.18+, which runs TypeScript on its own, so there is no build step.
  *
@@ -232,33 +237,45 @@ async function requestIndexing(accessToken: string, url: string, attempt = 1): P
   throw new Error(`Failed to submit ${url} (${response.status}): ${detail}`);
 }
 
+/**
+ * TEMPORARY: while testing the workflow against a personal Search Console
+ * property, every run submits this one URL instead of anything the push touched.
+ * Restore the commented-out block below to go back to the real docs behaviour.
+ */
+const TEST_URL = "https://rishi.app/blog/neon-vs-supabase-stackoverflow";
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
-  const explicitFiles = args.filter((arg) => !arg.startsWith("--") && arg.trim() !== "");
-  const baseUrl = process.env.DOCS_BASE_URL ?? "https://docs.creem.io";
 
-  let files: string[];
-  if (explicitFiles.length > 0) {
-    files = explicitFiles;
-  } else {
-    const base = process.env.BASE_SHA;
-    if (!base) {
-      throw new Error("Pass page paths as arguments, or set BASE_SHA to diff a push.");
-    }
-    files = getAddedPages(base, process.env.HEAD_SHA ?? "HEAD");
-  }
+  // --- Temporarily disabled: work out the docs.creem.io URLs a push added. ---
+  // const explicitFiles = args.filter((arg) => !arg.startsWith("--") && arg.trim() !== "");
+  // const baseUrl = process.env.DOCS_BASE_URL ?? "https://docs.creem.io";
+  //
+  // let files: string[];
+  // if (explicitFiles.length > 0) {
+  //   files = explicitFiles;
+  // } else {
+  //   const base = process.env.BASE_SHA;
+  //   if (!base) {
+  //     throw new Error("Pass page paths as arguments, or set BASE_SHA to diff a push.");
+  //   }
+  //   files = getAddedPages(base, process.env.HEAD_SHA ?? "HEAD");
+  // }
+  //
+  // const urls = [
+  //   ...new Set(files.map((file) => toPageUrl(file, baseUrl)).filter((url) => url !== null)),
+  // ];
+  //
+  // if (urls.length === 0) {
+  //   console.log("No new docs pages to submit.");
+  //   return;
+  // }
+  // --- end disabled block ---
 
-  const urls = [
-    ...new Set(files.map((file) => toPageUrl(file, baseUrl)).filter((url) => url !== null)),
-  ];
+  const urls = [TEST_URL];
 
-  if (urls.length === 0) {
-    console.log("No new docs pages to submit.");
-    return;
-  }
-
-  console.log(`Found ${urls.length} new page(s):`);
+  console.log(`Submitting ${urls.length} test page(s):`);
   urls.forEach((url) => console.log(`  ${url}`));
 
   if (dryRun) {
