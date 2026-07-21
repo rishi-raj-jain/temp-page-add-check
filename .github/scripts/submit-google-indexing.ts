@@ -1,10 +1,11 @@
 /**
  * Asks Google to index the docs pages a push added.
  *
- * TEMPORARY TEST MODE: the docs.creem.io logic in main() is commented out. Every
- * run submits the single URL in TEST_URL, so the workflow can be exercised with
- * a personal service account before the real property is wired up. Uncomment the
- * block in main() to restore normal behaviour.
+ * TEMPORARY TEST MODE: nothing on docs.creem.io is submitted. The pages a push
+ * added are still worked out and printed, so the job log shows what would have
+ * gone out, but the only URL actually sent is TEST_URL. That lets a personal
+ * service account exercise the whole path before the real property is wired up.
+ * Uncomment the block in main() to restore normal behaviour.
  *
  * Runs from the docs-google-indexing workflow on every push to main. Needs Node
  * 22.18+, which runs TypeScript on its own, so there is no build step.
@@ -240,32 +241,55 @@ async function requestIndexing(accessToken: string, url: string, attempt = 1): P
 /**
  * TEMPORARY: while testing the workflow against a personal Search Console
  * property, every run submits this one URL instead of anything the push touched.
- * Restore the commented-out block below to go back to the real docs behaviour.
+ * See the disabled submit path in main() to go back to the real docs behaviour.
  */
 const TEST_URL = "https://rishi.app/blog/neon-vs-supabase-stackoverflow";
+
+/**
+ * TEMPORARY: the docs URLs this run would have submitted for real. Nothing is
+ * sent, it is only printed, so the job log still shows whether the diff and the
+ * path-to-URL mapping picked up the right pages. Never throws: a missing BASE_SHA
+ * is worth a line in the log, not a failed test run.
+ */
+function previewDocsUrls(args: string[]): string[] {
+  const explicitFiles = args.filter((arg) => !arg.startsWith("--") && arg.trim() !== "");
+  const baseUrl = process.env.DOCS_BASE_URL ?? "https://docs.creem.io";
+
+  let files: string[];
+  if (explicitFiles.length > 0) {
+    files = explicitFiles;
+  } else {
+    const base = process.env.BASE_SHA;
+    if (!base) {
+      console.log("  (no BASE_SHA and no file arguments, nothing to work out)");
+      return [];
+    }
+    try {
+      files = getAddedPages(base, process.env.HEAD_SHA ?? "HEAD");
+    } catch (error: unknown) {
+      console.log(`  (git diff failed: ${error instanceof Error ? error.message : error})`);
+      return [];
+    }
+  }
+
+  return [...new Set(files.map((file) => toPageUrl(file, baseUrl)).filter((url) => url !== null))];
+}
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
 
-  // --- Temporarily disabled: work out the docs.creem.io URLs a push added. ---
-  // const explicitFiles = args.filter((arg) => !arg.startsWith("--") && arg.trim() !== "");
-  // const baseUrl = process.env.DOCS_BASE_URL ?? "https://docs.creem.io";
-  //
-  // let files: string[];
-  // if (explicitFiles.length > 0) {
-  //   files = explicitFiles;
-  // } else {
-  //   const base = process.env.BASE_SHA;
-  //   if (!base) {
-  //     throw new Error("Pass page paths as arguments, or set BASE_SHA to diff a push.");
-  //   }
-  //   files = getAddedPages(base, process.env.HEAD_SHA ?? "HEAD");
-  // }
-  //
-  // const urls = [
-  //   ...new Set(files.map((file) => toPageUrl(file, baseUrl)).filter((url) => url !== null)),
-  // ];
+  console.log("Docs pages this push would normally submit:");
+  const docsUrls = previewDocsUrls(args);
+  if (docsUrls.length === 0) {
+    console.log("  none");
+  } else {
+    docsUrls.forEach((url) => console.log(`  ${url}`));
+  }
+
+  // --- Temporarily disabled: submit the docs URLs above. Send the test URL
+  // instead, so a personal service account can exercise the whole path. ---
+  // const urls = docsUrls;
   //
   // if (urls.length === 0) {
   //   console.log("No new docs pages to submit.");
@@ -275,7 +299,7 @@ async function main(): Promise<void> {
 
   const urls = [TEST_URL];
 
-  console.log(`Submitting ${urls.length} test page(s):`);
+  console.log(`\nTest mode, submitting ${urls.length} page(s) instead:`);
   urls.forEach((url) => console.log(`  ${url}`));
 
   if (dryRun) {
